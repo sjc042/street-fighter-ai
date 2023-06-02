@@ -30,7 +30,7 @@ MODEL_NAME = r"ppo_ryu_2500000_steps_updated" # Specify the model file to load. 
 # ppo_ryu_7000000_steps_updated: Overfitted, dominates first round but not generalizable. 
 
 RANDOM_ACTION = False
-NUM_EPISODES = 30 # Make sure NUM_EPISODES >= 3 if you set RESET_ROUND to False to see the whole final stage game.
+NUM_EPISODES = 10 # Make sure NUM_EPISODES >= 3 if you set RESET_ROUND to False to see the whole final stage game.
 MODEL_DIR = r"trained_models/"
 
 def make_env(game, state):
@@ -46,7 +46,15 @@ def make_env(game, state):
     return _init
 
 game = "StreetFighterIISpecialChampionEdition-Genesis"
-env = make_env(game, state="Champion.Level12.RyuVsBison")()
+
+'''
+states:
+Champion.Level1.RyuVsDhalsim
+Champion.Level1.RyuVsGuile
+Champion.Level12.RyuVsBison
+
+'''
+env = make_env(game, state="Champion.Level12.RyuVsBison")() # Ciel: changed from level 12 to level 1
 # model = PPO("CnnPolicy", env)
 
 if not RANDOM_ACTION:
@@ -61,7 +69,8 @@ num_victory = 0
 
 print("\nFighting Begins!\n")
 
-for _ in range(num_episodes):
+for i in range(num_episodes):
+    print("Episode {}/{}".format(i+1, num_episodes))
     done = False
     
     if RESET_ROUND:
@@ -88,6 +97,8 @@ for _ in range(num_episodes):
     if info['enemy_hp'] < 0:
         print("Victory!")
         num_victory += 1
+    else:
+        print("Defeat!")
 
     print("Total reward: {}\n".format(total_reward))
     episode_reward_sum += total_reward

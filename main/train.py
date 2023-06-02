@@ -55,7 +55,13 @@ def make_env(game, state, seed=0):
 def main():
     # Set up the environment and model
     game = "StreetFighterIISpecialChampionEdition-Genesis"
-    env = SubprocVecEnv([make_env(game, state="Champion.Level12.RyuVsBison", seed=i) for i in range(NUM_ENV)])
+    '''
+    states:
+    Champion.Level1.RyuVsDhalsim
+    Champion.Level1.RyuVsGuile
+    Champion.Level12.RyuVsBison
+    '''
+    env = SubprocVecEnv([make_env(game, state="Champion.Level1.RyuVsDhalsim", seed=i) for i in range(NUM_ENV)])
 
     # Set linear schedule for learning rate
     # Start
@@ -70,7 +76,7 @@ def main():
 
     # fine-tune
     # clip_range_schedule = linear_schedule(0.075, 0.025)
-
+    
     model = PPO(
         "CnnPolicy", 
         env,
@@ -121,7 +127,7 @@ def main():
     sys.stdout = original_stdout
 
     # Save the final model
-    model.save(os.path.join(save_dir, "ppo_sf2_ryu_final.zip"))
+    model.save(os.path.join(save_dir, "ppo_sf2_ryu_v_dhalsim.zip"))
 
 if __name__ == "__main__":
     main()

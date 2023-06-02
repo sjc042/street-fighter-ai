@@ -71,8 +71,8 @@ class StreetFighterCustomWrapper(gym.Wrapper):
             self.env.render()
             time.sleep(0.01)
 
+        # Ciel: the input lasts 5 frames, so player cannot use special moves
         for _ in range(self.num_step_frames - 1):
-            
             # Keep the button pressed for (num_step_frames - 1) frames.
             obs, _reward, _done, info = self.env.step(action)
             self.frame_stack.append(obs[::2, ::2, :])
