@@ -61,6 +61,7 @@ def main():
     Champion.Level1.RyuVsGuile
     Champion.Level12.RyuVsBison
     '''
+    # Ciel: select different state files for different levels!!!
     env = SubprocVecEnv([make_env(game, state="Champion.Level1.RyuVsDhalsim", seed=i) for i in range(NUM_ENV)])
 
     # Set linear schedule for learning rate
@@ -127,6 +128,7 @@ def main():
     sys.stdout = original_stdout
 
     # Save the final model
+    # Ciel: change save file name!!!
     model.save(os.path.join(save_dir, "ppo_sf2_ryu_v_dhalsim.zip"))
 
 if __name__ == "__main__":
