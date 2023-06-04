@@ -21,7 +21,16 @@ from street_fighter_custom_wrapper import StreetFighterCustomWrapper
 
 RESET_ROUND = True # Reset the round when fight is over. 
 RENDERING = False
-MODEL_PATH = r"trained_models/ppo_ryu_2000000_steps"
+# Ciel: change the model path for evaluation!!!
+MODEL_PATH = r"trained_models/ppo_ryu_4000000_steps"
+# Ciel: change game state!!!
+'''
+states:
+Champion.Level1.RyuVsDhalsim
+Champion.Level1.RyuVsGuile
+Champion.Level12.RyuVsBison
+'''
+STATE = "Champion.Level1.RyuVsGuile"
 
 def make_env(game, state):
     def _init():
@@ -36,8 +45,10 @@ def make_env(game, state):
         return env
     return _init
 
+
+
 game = "StreetFighterIISpecialChampionEdition-Genesis"
-env = make_env(game, state="Champion.Level12.RyuVsBison")()
+env = make_env(game, state=STATE)()
 model = PPO("CnnPolicy", env)
 model.load(MODEL_PATH)
 mean_reward, std_reward = evaluate_policy(model, env, render=False, n_eval_episodes=5, deterministic=False, return_episode_rewards=True)

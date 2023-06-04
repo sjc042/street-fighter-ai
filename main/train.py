@@ -119,7 +119,7 @@ def main():
 
     # Writing the training logs from stdout to a file
     original_stdout = sys.stdout
-    log_file_path = os.path.join(save_dir, "training_log.txt")
+    log_file_path = os.path.join(save_dir, "training_log_{}.txt".format(save_name_prefix))
     with open(log_file_path, 'w') as log_file:
         sys.stdout = log_file
     
