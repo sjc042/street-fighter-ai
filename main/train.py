@@ -23,6 +23,16 @@ from street_fighter_custom_wrapper import StreetFighterCustomWrapper
 
 NUM_ENV = 16
 LOG_DIR = 'logs'
+TRAIN_NEW_MODEL = False   # Ciel: if true then train a new model, else finetune an exiting model
+finetune_model_path = "trained_models/ppo_ryu_2000000_steps.zip"  # Ciel: update if TRAIN_NEW_MODEL = False
+STATE = "Champion.Level1.RyuVsGuile"    # Ciel: change the state the model is trained on
+'''
+states:
+Champion.Level1.RyuVsDhalsim
+Champion.Level1.RyuVsGuile
+Champion.Level12.RyuVsBison
+'''
+
 os.makedirs(LOG_DIR, exist_ok=True)
 
 # Linear scheduler
@@ -55,62 +65,53 @@ def make_env(game, state, seed=0):
 def main():
     # Set up the environment and model
     game = "StreetFighterIISpecialChampionEdition-Genesis"
-    '''
-    states:
-    Champion.Level1.RyuVsDhalsim
-    Champion.Level1.RyuVsGuile
-    Champion.Level12.RyuVsBison
-    '''
-    # Ciel: select different state files for different levels!!!
-    game_state = "Champion.Level1.RyuVsGuile"
-    save_name_prefix = game_state.split(".")[-1]
+    game_state = STATE
+    save_name_prefix = game_state.split(".")[1] + "_" + game_state.split(".")[2]
     env = SubprocVecEnv([make_env(game, state=game_state, seed=i) for i in range(NUM_ENV)])
-    # Ciel: change save file name!!!
     model_name = "ppo_sf2_{}.zip".format(save_name_prefix)
     print("save model as {}".format(model_name))
 
-    # Set linear schedule for learning rate
-    # Start
-    lr_schedule = linear_schedule(2.5e-4, 2.5e-6)
+    if TRAIN_NEW_MODEL:
+        # Set linear schedule for learning rate
+        # Start
+        lr_schedule = linear_schedule(2.5e-4, 2.5e-6)
+        # Set linear scheduler for clip range
+        # Start
+        clip_range_schedule = linear_schedule(0.15, 0.025)
+        model = PPO(
+            "CnnPolicy", 
+            env,
+            device="cuda", 
+            verbose=1,
+            n_steps=512,
+            batch_size=512,
+            n_epochs=4,
+            gamma=0.94,
+            learning_rate=lr_schedule,
+            clip_range=clip_range_schedule,
+            tensorboard_log="logs"
+        )
+    else:
+        # fine-tune
+        lr_schedule = linear_schedule(5.0e-5, 2.5e-6)
 
-    # fine-tune
-    # lr_schedule = linear_schedule(5.0e-5, 2.5e-6)
+        # fine-tune
+        clip_range_schedule = linear_schedule(0.075, 0.025)
+        # Load the model from file
+        model_path = finetune_model_path
 
-    # Set linear scheduler for clip range
-    # Start
-    clip_range_schedule = linear_schedule(0.15, 0.025)
+        # Load model and modify the learning rate and entropy coefficient
+        custom_objects = {
+            "learning_rate": lr_schedule,
+            "clip_range": clip_range_schedule,
+            "n_steps": 512
+        }
+        model = PPO.load(model_path, env=env, device="cuda", custom_objects=custom_objects)
 
-    # fine-tune
-    # clip_range_schedule = linear_schedule(0.075, 0.025)
-    
-    model = PPO(
-        "CnnPolicy", 
-        env,
-        device="cuda", 
-        verbose=1,
-        n_steps=512,
-        batch_size=512,
-        n_epochs=4,
-        gamma=0.94,
-        learning_rate=lr_schedule,
-        clip_range=clip_range_schedule,
-        tensorboard_log="logs"
-    )
 
     # Set the save directory
     save_dir = "trained_models"
     os.makedirs(save_dir, exist_ok=True)
-
-    # Load the model from file
-    # model_path = "trained_models/ppo_ryu_7000000_steps.zip"
-    
-    # Load model and modify the learning rate and entropy coefficient
-    # custom_objects = {
-    #     "learning_rate": lr_schedule,
-    #     "clip_range": clip_range_schedule,
-    #     "n_steps": 512
-    # }
-    # model = PPO.load(model_path, env=env, device="cuda", custom_objects=custom_objects)
 
     # Set up callbacks
     # Note that 1 timesetp = 6 frame
