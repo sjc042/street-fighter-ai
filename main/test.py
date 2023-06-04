@@ -21,8 +21,16 @@ from street_fighter_custom_wrapper import StreetFighterCustomWrapper
 RESET_ROUND = True  # Whether to reset the round when fight is over. 
 RENDERING = True    # Whether to render the game screen.
 
-MODEL_NAME = r"ppo_ryu_2500000_steps_updated" # Specify the model file to load. Model "ppo_ryu_2500000_steps_updated" is capable of beating the final stage (Bison) of the game.
-
+# Ciel: change model name!!!
+MODEL_NAME = r"ppo_ryu_4500000_steps" # Specify the model file to load. Model "ppo_ryu_2500000_steps_updated" is capable of beating the final stage (Bison) of the game.
+# Ciel: change game state!!!
+'''
+states:
+Champion.Level1.RyuVsDhalsim
+Champion.Level1.RyuVsGuile
+Champion.Level12.RyuVsBison
+'''
+STATE = "Champion.Level1.RyuVsGuile"
 # Model notes:
 # ppo_ryu_2000000_steps_updated: Just beginning to overfit state, generalizable but not quite capable.
 # ppo_ryu_2500000_steps_updated: Approaching the final overfitted state, cannot dominate first round but partially generalizable. High chance of beating the final stage.
@@ -46,15 +54,7 @@ def make_env(game, state):
     return _init
 
 game = "StreetFighterIISpecialChampionEdition-Genesis"
-
-'''
-states:
-Champion.Level1.RyuVsDhalsim
-Champion.Level1.RyuVsGuile
-Champion.Level12.RyuVsBison
-
-'''
-env = make_env(game, state="Champion.Level12.RyuVsBison")() # Ciel: changed from level 12 to level 1
+env = make_env(game, state=STATE)()
 # model = PPO("CnnPolicy", env)
 
 if not RANDOM_ACTION:

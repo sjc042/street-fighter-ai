@@ -62,7 +62,12 @@ def main():
     Champion.Level12.RyuVsBison
     '''
     # Ciel: select different state files for different levels!!!
-    env = SubprocVecEnv([make_env(game, state="Champion.Level1.RyuVsDhalsim", seed=i) for i in range(NUM_ENV)])
+    game_state = "Champion.Level1.RyuVsGuile"
+    save_name_prefix = game_state.split(".")[-1]
+    env = SubprocVecEnv([make_env(game, state=game_state, seed=i) for i in range(NUM_ENV)])
+    # Ciel: change save file name!!!
+    model_name = "ppo_sf2_{}.zip".format(save_name_prefix)
+    print("save model as {}".format(model_name))
 
     # Set linear schedule for learning rate
     # Start
@@ -110,7 +115,7 @@ def main():
     # Set up callbacks
     # Note that 1 timesetp = 6 frame
     checkpoint_interval = 31250 # checkpoint_interval * num_envs = total_steps_per_checkpoint
-    checkpoint_callback = CheckpointCallback(save_freq=checkpoint_interval, save_path=save_dir, name_prefix="ppo_ryu")
+    checkpoint_callback = CheckpointCallback(save_freq=checkpoint_interval, save_path=save_dir, name_prefix=save_name_prefix)
 
     # Writing the training logs from stdout to a file
     original_stdout = sys.stdout
@@ -119,7 +124,8 @@ def main():
         sys.stdout = log_file
     
         model.learn(
-            total_timesteps=int(100000000), # total_timesteps = stage_interval * num_envs * num_stages (1120 rounds)
+            # Ciel: changed from 100,000,000 to 5,000,000
+            total_timesteps=int(5000000), # total_timesteps = stage_interval * num_envs * num_stages (1120 rounds)
             callback=[checkpoint_callback]#, stage_increase_callback]
         )
         env.close()
@@ -128,8 +134,7 @@ def main():
     sys.stdout = original_stdout
 
     # Save the final model
-    # Ciel: change save file name!!!
-    model.save(os.path.join(save_dir, "ppo_sf2_ryu_v_dhalsim.zip"))
+    model.save(os.path.join(save_dir, model_name))
 
 if __name__ == "__main__":
     main()
