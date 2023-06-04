@@ -11,7 +11,8 @@
 # ==============================================================================
 
 import os
-import time 
+import time
+import gzip
 
 import retro
 from stable_baselines3 import PPO
@@ -21,13 +22,16 @@ from street_fighter_custom_wrapper import StreetFighterCustomWrapper
 RESET_ROUND = False  # Whether to reset the round when fight is over. 
 RENDERING = True    # Whether to render the game screen.
 # Ciel: change model name!!!
-MODEL_NAME = r"Level1_RyuVsGuile_350000_steps_updated" # Specify the model file to load. Model "ppo_ryu_2500000_steps_updated" is capable of beating the final stage (Bison) of the game.
-STATE = "Champion.Level1.RyuVsGuile"    # Ciel: change game state!!!
+MODEL_NAME = r"Level2_RyuVsKen_6500000_steps" # Specify the model file to load. Model "ppo_ryu_2500000_steps_updated" is capable of beating the final stage (Bison) of the game.
+STATE = "Champion.Level3.Chunli"    # Ciel: change game state!!!
 '''
 states:
 Champion.Level1.RyuVsDhalsim
 Champion.Level1.RyuVsGuile
 Champion.Level12.RyuVsBison
+Champion.Level2.RyuVsKen
+Champion.Level3.Chunli
+next_game_round
 '''
 
 # Model notes:
@@ -37,8 +41,9 @@ Champion.Level12.RyuVsBison
 # ppo_ryu_7000000_steps_updated: Overfitted, dominates first round but not generalizable. 
 
 RANDOM_ACTION = False
-NUM_EPISODES = 10 # Make sure NUM_EPISODES >= 3 if you set RESET_ROUND to False to see the whole final stage game.
+NUM_EPISODES = 4 # Make sure NUM_EPISODES >= 3 if you set RESET_ROUND to False to see the whole final stage game.
 MODEL_DIR = r"trained_models/"
+SAVE_STATE = True   # Ciel: whether to save the game state when model advances to the next level
 
 def make_env(game, state):
     def _init():
@@ -51,6 +56,11 @@ def make_env(game, state):
         env = StreetFighterCustomWrapper(env, reset_round=RESET_ROUND, rendering=RENDERING)
         return env
     return _init
+
+def save_game_state(env, filename):
+    content = env.em.get_state()
+    with gzip.open(filename, 'wb') as f:
+        f.write(content)
 
 game = "StreetFighterIISpecialChampionEdition-Genesis"
 env = make_env(game, state=STATE)()
@@ -69,7 +79,10 @@ num_victory = 0
 print("\nFighting Begins!\n")
 
 for i in range(num_episodes):
+    ifAdvanced = ((i + 1 == 3) and (num_victory == 2)) or ((i + 1 == 4) and (num_victory == 2))
+
     print("Episode {}/{}".format(i+1, num_episodes))
+    
     done = False
     
     if RESET_ROUND:
@@ -89,6 +102,11 @@ for i in range(num_episodes):
         if reward != 0:
             total_reward += reward
             print("Reward: {:.3f}, playerHP: {}, enemyHP:{}".format(reward, info['agent_hp'], info['enemy_hp']))
+            if SAVE_STATE and ifAdvanced:
+                print("adanced to next level\nsaving game state and exit")
+                save_game_state(env, 'next_game_round.state')
+                done = True
+                break
         
         if info['enemy_hp'] < 0 or info['agent_hp'] < 0:
             done = True
@@ -106,7 +124,9 @@ for i in range(num_episodes):
         while info['enemy_hp'] < 0 or info['agent_hp'] < 0:
         # Inter scene transition. Do nothing.
             obs, reward, done, info = env.step([0] * 12)
-            env.render()
+            if RENDERING:
+                env.render()
+    
 
 env.close()
 print("Winning rate: {}".format(1.0 * num_victory / num_episodes))

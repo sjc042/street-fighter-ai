@@ -23,14 +23,16 @@ from street_fighter_custom_wrapper import StreetFighterCustomWrapper
 
 NUM_ENV = 16
 LOG_DIR = 'logs'
-TRAIN_NEW_MODEL = False   # Ciel: if true then train a new model, else finetune an exiting model
-finetune_model_path = "trained_models/ppo_ryu_2000000_steps.zip"  # Ciel: update if TRAIN_NEW_MODEL = False
-STATE = "Champion.Level1.RyuVsGuile"    # Ciel: change the state the model is trained on
+TRAIN_NEW_MODEL = True   # Ciel: if true then train a new model, else finetune an exiting model
+finetune_model_path = "trained_models\Level1_RyuVsGuile_4000000_steps.zip"  # Ciel: update if TRAIN_NEW_MODEL = False
+STATE = "Champion.Level3.Chunli"    # Ciel: change the state the model is trained on
 '''
 states:
 Champion.Level1.RyuVsDhalsim
 Champion.Level1.RyuVsGuile
 Champion.Level12.RyuVsBison
+Champion.Level2.RyuVsKen
+Champion.Level3.Chunli
 '''
 
 os.makedirs(LOG_DIR, exist_ok=True)
@@ -94,7 +96,7 @@ def main():
     else:
         # fine-tune
         lr_schedule = linear_schedule(5.0e-5, 2.5e-6)
-
+        
         # fine-tune
         clip_range_schedule = linear_schedule(0.075, 0.025)
         # Load the model from file
@@ -125,8 +127,8 @@ def main():
         sys.stdout = log_file
     
         model.learn(
-            # Ciel: changed from 100,000,000 to 5,000,000
-            total_timesteps=int(5000000), # total_timesteps = stage_interval * num_envs * num_stages (1120 rounds)
+            # Ciel: changed from 100,000,000 to 7,000,000
+            total_timesteps=int(7000000), # total_timesteps = stage_interval * num_envs * num_stages (1120 rounds)
             callback=[checkpoint_callback]#, stage_increase_callback]
         )
         env.close()
